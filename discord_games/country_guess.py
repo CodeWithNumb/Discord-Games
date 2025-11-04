@@ -143,8 +143,8 @@ class CountryGuesser:
         content = message.content.strip().lower()
 
         if options:
-            if not content in options:
-                return
+            if content not in options:
+                return await self.wait_for_response(ctx, options=options, length=length)
 
         return message, content
 
@@ -222,9 +222,10 @@ class CountryGuesser:
                     )
 
                     try:
-                        hint_msg, resp = await self.wait_for_response(
-                            ctx, options=("y", "n")
-                        )
+                        result = await self.wait_for_response(ctx, options=("y", "n"))
+                        if not result:
+                            break
+                        hint_msg, resp = result
                     except asyncio.TimeoutError:
                         break
                     else:
