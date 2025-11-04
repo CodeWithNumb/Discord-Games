@@ -18,6 +18,12 @@ from discord.ext import commands
 
 from .utils import *
 
+import ssl
+
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
+
 
 class UserData(TypedDict):
     user: discord.User
@@ -189,7 +195,7 @@ class TypeRacer:
 
         if not words_mode:
             async with aiohttp.ClientSession() as session:
-                async with session.get(self.SENTENCE_URL) as r:
+                async with session.get(self.SENTENCE_URL, ssl=ssl_context) as r:
                     if r.ok:
                         text: dict[str, Any] = await r.json()
                         text = text.get("content", "")
@@ -197,6 +203,16 @@ class TypeRacer:
                         raise RuntimeError(
                             f"HTTP request raised an error: {r.status}; {r.reason}"
                         )
+                        
+#            async with aiohttp.ClientSession() as session:
+#                async with session.get(self.SENTENCE_URL) as r:
+#                    if r.ok:
+#                        text: dict[str, Any] = await r.json()
+#                        text = text.get("content", "")
+#                    else:
+#                        raise RuntimeError(
+#                            f"HTTP request raised an error: {r.status}; {r.reason}"
+#                        )
 
         else:
             with open(parent / "assets/words.txt", "r") as wordsfp:
