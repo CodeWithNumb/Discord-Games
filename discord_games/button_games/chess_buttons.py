@@ -111,6 +111,8 @@ class BetaChess(Chess):
         *,
         embed_color: DiscordColor = DEFAULT_COLOR,
         timeout: Optional[float] = None,
+        add_reaction_after_move: bool = False,
+        **kwargs,
     ) -> discord.Message:
         """
         starts the Chess(buttons) Game
@@ -135,6 +137,14 @@ class BetaChess(Chess):
         self.view = ChessView(self, timeout=timeout)
 
         self.message = await ctx.send(embed=embed, view=self.view)
-
         await self.view.wait()
+
+
+        # ✅ Optionally add reaction behavior if requested
+        if add_reaction_after_move:
+            try:
+                await self.message.add_reaction("✅")
+            except discord.HTTPException:
+                pass  # ignore if reactions fail
+                
         return self.message
