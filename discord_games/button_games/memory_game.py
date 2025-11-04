@@ -29,6 +29,7 @@ class MemoryButton(discord.ui.Button["MemoryView"]):
 
             self.emoji = self.value
             self.disabled = True
+            self.style = discord.ButtonStyle.success
             await interaction.response.edit_message(view=self.view)
 
             if opened.value != self.value:
@@ -58,6 +59,7 @@ class MemoryButton(discord.ui.Button["MemoryView"]):
             self.emoji = self.value
             self.view.opened = self
             self.disabled = True
+            self.style = discord.ButtonStyle.success
             return await interaction.response.edit_message(view=self.view)
 
 
@@ -132,7 +134,7 @@ class MemoryGame:
         embed_color: DiscordColor = DEFAULT_COLOR,
         items: list[str] = [],
         pause_time: float = 0.7,
-        button_style: discord.ButtonStyle = discord.ButtonStyle.red,
+        button_style: discord.ButtonStyle = discord.ButtonStyle.grey,
         timeout: Optional[float] = None,
     ) -> discord.Message:
         """
