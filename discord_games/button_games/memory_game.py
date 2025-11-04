@@ -50,7 +50,11 @@ class MemoryButton(discord.ui.Button["MemoryView"]):
                 view.second = None
 
                 # check win condition
-                if all(b.disabled for b in view.children if isinstance(b, discord.ui.Button) and b.value):
+                if all(
+                    getattr(b, "value", None) and b.disabled
+                    for b in view.children
+                    if isinstance(b, discord.ui.Button) and getattr(b, "value", None)
+                ):
                     await interaction.message.edit(content="🎉 Game Over, You Won!", view=view)
                     view.stop()
             else:
