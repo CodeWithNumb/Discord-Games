@@ -11,73 +11,91 @@ from ..utils import *
 
 
 class MemoryButton(discord.ui.Button["MemoryView"]):
-    def __init__(self, emoji: str, *, style: discord.ButtonStyle, row: int = 0) -> None:
+    def __init__(self, emoji: str, *, row: int = 0) -> None:
         self.value = emoji
-
-        super().__init__(
-            label="\u200b",
-            style=style,
-            row=row,
-        )
+        super().__init__(label="\u200b", style=discord.ButtonStyle.grey, row=row)
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        game = self.view.game
+        view = self.view
+        game = view.game
 
-        if opened := self.view.opened:
+        # If stop button was pressed or already game over
+        if view.stopped:
+            return await interaction.response.defer()
+
+        # First click
+        if view.first is None:
+            self.emoji = self.value
+            self.style = discord.ButtonStyle.blurple
+            self.disabled = True
+            view.first = self
+            await interaction.response.edit_message(view=view)
+            return
+
+        # Second click
+        elif view.second is None and self != view.first:
+            self.emoji = self.value
+            self.style = discord.ButtonStyle.primary  # purple-like
+            self.disabled = True
+            view.second = self
             game.moves += 1
             game.embed.set_field_at(0, name="\u200b", value=f"Moves: `{game.moves}`")
+            await interaction.response.edit_message(view=view, embed=game.embed)
 
-            self.emoji = self.value
-            self.disabled = True
-            self.style = discord.ButtonStyle.success
-            await interaction.response.edit_message(view=self.view)
+            # Check match
+            if view.first.value == view.second.value:
+                view.first.style = discord.ButtonStyle.success
+                view.second.style = discord.ButtonStyle.success
+                view.first = None
+                view.second = None
 
-            if opened.value != self.value:
-                await asyncio.sleep(self.view.pause_time)
-
-                opened.emoji = None
-                opened.disabled = False
-
-                self.emoji = None
-                self.disabled = False
-                self.view.opened = None
+                # check win condition
+                if all(b.disabled for b in view.children if isinstance(b, discord.ui.Button) and b.value):
+                    await interaction.message.edit(content="🎉 Game Over, You Won!", view=view)
+                    view.stop()
             else:
-                self.view.opened = None
+                await asyncio.sleep(view.pause_time)
 
-                if all(
-                    button.disabled
-                    for button in self.view.children
-                    if isinstance(button, discord.ui.Button)
-                ):
-                    await interaction.message.edit(
-                        content="Game Over, Congrats!", view=self.view
-                    )
-                    return self.view.stop()
+                # Reset both
+                for b in (view.first, view.second):
+                    b.emoji = None
+                    b.style = discord.ButtonStyle.grey
+                    b.disabled = False
 
-            return await interaction.message.edit(view=self.view, embed=game.embed)
+                view.first = None
+                view.second = None
+
+                await interaction.message.edit(view=view, embed=game.embed)
+
         else:
-            self.emoji = self.value
-            self.view.opened = self
-            self.disabled = True
-            self.style = discord.ButtonStyle.grey
-            return await interaction.response.edit_message(view=self.view)
+            await interaction.response.defer()
+
+
+class StopButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(emoji="🛑", style=discord.ButtonStyle.danger, row=4)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: MemoryView = self.view
+        view.stopped = True
+
+        for child in view.children:
+            if isinstance(child, discord.ui.Button):
+                child.disabled = True
+                if child != self:
+                    child.style = discord.ButtonStyle.danger
+
+        await interaction.response.edit_message(
+            content="🟥 **Game Stopped!**", view=view
+        )
+        view.stop()
 
 
 class MemoryView(BaseView):
-    board: list[list[str]]
     DEFAULT_ITEMS: ClassVar[list[str]] = [
-        "🥝",
-        "🍓",
-        "🍹",
-        "🍋",
-        "🥭",
-        "🍎",
-        "🍊",
-        "🍍",
-        "🍑",
-        "🍇",
-        "🍉",
-        "🥬",
+        "🥝", "🍓", "🍹", "🍋",
+        "🥭", "🍎", "🍊", "🍍",
+        "🍑", "🍇", "🍉", "🥬",
     ]
 
     def __init__(
@@ -85,17 +103,15 @@ class MemoryView(BaseView):
         game: MemoryGame,
         items: list[str],
         *,
-        button_style: discord.ButtonStyle,
         pause_time: float,
         timeout: Optional[float] = None,
     ) -> None:
         super().__init__(timeout=timeout)
-
         self.game = game
-
-        self.button_style = button_style
         self.pause_time = pause_time
-        self.opened: Optional[MemoryButton] = None
+        self.first: Optional[MemoryButton] = None
+        self.second: Optional[MemoryButton] = None
+        self.stopped: bool = False
 
         if not items:
             items = self.DEFAULT_ITEMS[:]
@@ -106,20 +122,22 @@ class MemoryView(BaseView):
         random.shuffle(items)
         items.insert(12, None)
 
-        self.board = chunk(items, count=5)
+        board = chunk(items, count=5)
 
-        for i, row in enumerate(self.board):
+        for i, row in enumerate(board):
             for item in row:
-                button = MemoryButton(item, style=self.button_style, row=i)
-
-                if not item:
-                    button.disabled = True
-                self.add_item(button)
+                if item:
+                    button = MemoryButton(item, row=i)
+                    self.add_item(button)
+                else:
+                    stop = StopButton()
+                    stop.row = i
+                    self.add_item(stop)
 
 
 class MemoryGame:
     """
-    Memory Game
+    Memory Game with matching logic and color animations.
     """
 
     def __init__(self) -> None:
@@ -134,47 +152,23 @@ class MemoryGame:
         embed_color: DiscordColor = DEFAULT_COLOR,
         items: list[str] = [],
         pause_time: float = 0.7,
-        button_style: discord.ButtonStyle = discord.ButtonStyle.grey,
         timeout: Optional[float] = None,
     ) -> discord.Message:
-        """
-        starts the memory game
-
-        Parameters
-        ----------
-        ctx : commands.Context
-            the context of the invokation command
-        embed_color : DiscordColor, optional
-            the color of the game embed, by default DEFAULT_COLOR
-        items : list[str], optional
-            items to use for the game tiles, by default []
-        pause_time : float, optional
-            specifies the duration to pause for before hiding the tiles again, by default 0.7
-        button_style : discord.ButtonStyle, optional
-            the primary button style to use, by default discord.ButtonStyle.red
-        timeout : Optional[float], optional
-            the timeout for the view, by default None
-
-        Returns
-        -------
-        discord.Message
-            returns the game message
-        """
         self.embed_color = embed_color
         self.embed = discord.Embed(
-            description="**Memory Game**", color=self.embed_color
+            description="🧩 **Memory Game**",
+            color=self.embed_color
         )
         self.embed.add_field(name="\u200b", value="Moves: `0`")
 
         self.view = MemoryView(
             game=self,
             items=items,
-            button_style=button_style,
             pause_time=pause_time,
             timeout=timeout,
         )
-        self.message = await ctx.send(embed=self.embed, view=self.view)
 
+        self.message = await ctx.send(embed=self.embed, view=self.view)
         await double_wait(
             wait_for_delete(ctx, self.message),
             self.view.wait(),
