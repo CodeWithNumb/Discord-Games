@@ -59,7 +59,7 @@ class MemoryButton(discord.ui.Button["MemoryView"]):
             self.emoji = self.value
             self.view.opened = self
             self.disabled = True
-            self.style = discord.ButtonStyle.success
+            self.style = discord.ButtonStyle.grey
             return await interaction.response.edit_message(view=self.view)
 
 
