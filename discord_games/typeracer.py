@@ -125,7 +125,10 @@ class TypeRacer:
             self.embed.description += (
                 self.format_line(len(winners), winners[len(winners) - 1]) + "\n"
             )
-            await self.message.edit(embed=self.embed)
+            #await self.message.edit(embed=self.embed)
+            buffer = await self._tr_img(text, str(pathlib.Path(__file__).parent / "assets/segoe-ui-semilight-411.ttf"))
+            file = discord.File(buffer, filename="tr.png")
+            await self.message.edit(embed=self.embed, attachments=[file])
 
             await message.add_reaction(self.EMOJI_MAP[len(winners)])
 
@@ -227,6 +230,7 @@ class TypeRacer:
             path_to_text_font = str(parent / "assets/segoe-ui-semilight-411.ttf")
 
         buffer = await self._tr_img(text, path_to_text_font)
+        self.file = discord.File(buffer, filename="tr.png")
 
         embed = discord.Embed(
             title=embed_title, color=self.embed_color, timestamp=dt.utcnow()
@@ -236,7 +240,7 @@ class TypeRacer:
         #if show_author:
             #embed.set_author(name=ctx.author.name, icon_url=av)
         self.embed = embed
-        self.message = await ctx.send(embed=embed, file=discord.File(buffer, "tr.png"))
+        self.message = await ctx.send(embed=embed, file=self.file)
 
         await self.wait_for_tr_response(
             ctx, text, timeout=timeout, min_accuracy=min_accuracy
