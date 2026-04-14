@@ -234,10 +234,7 @@ class TypeRacer:
         embed.set_image(url="attachment://tr.png")
 
         if show_author:
-            if discord.version_info.major >= 2:
-                av = ctx.bot.user.display_avatar.url
-            else:
-                av = ctx.bot.user.avatar.url
+            av = "https://cdn.discordapp.com/avatars/1452277443443560633/bcbe7c1a74415fcb67f65ae3142a38a8.png?size=.png"
             embed.set_author(name=ctx.author.name, icon_url=av)
 
         self.embed = embed
