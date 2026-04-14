@@ -235,7 +235,6 @@ class TypeRacer:
 
         #if show_author:
             #embed.set_author(name=ctx.author.name, icon_url=av)
-
         self.embed = embed
         self.message = await ctx.send(embed=embed, file=discord.File(buffer, "tr.png"))
 
