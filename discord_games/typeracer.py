@@ -233,9 +233,8 @@ class TypeRacer:
         )
         embed.set_image(url="attachment://tr.png")
 
-        if show_author:
-            av = "https://cdn.discordapp.com/avatars/1452277443443560633/bcbe7c1a74415fcb67f65ae3142a38a8.png?size=.png"
-            embed.set_author(name=ctx.author.name, icon_url=av)
+        #if show_author:
+            #embed.set_author(name=ctx.author.name, icon_url=av)
 
         self.embed = embed
         self.message = await ctx.send(embed=embed, file=discord.File(buffer, "tr.png"))
