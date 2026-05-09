@@ -150,11 +150,7 @@ class Akinator:
         if self.delete_button:
             self.instructions += f"{STOP} 🠒 `cancel`\n"
 
-        await self.aki.start_game(
-            language="en",
-            child_mode=child_mode,
-            theme="c"
-        )
+        await self.aki.start_game()
 
         embed = self.build_embed()
         self.message = await ctx.send(embed=embed)
