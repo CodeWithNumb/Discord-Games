@@ -79,21 +79,22 @@ class Akinator:
         return embed
 
     async def win(self) -> discord.Embed:
-        #await self.aki.win()
-        self.guess = self.aki.guesses[0]
-
         embed = discord.Embed(color=self.embed_color)
         embed.title = "Character Guesser Engine Results"
         embed.description = f"Total Questions: `{self.aki.step + 1}`"
 
+        name = self.aki.name_proposition or "Unknown"
+        desc = self.aki.description_proposition or "No description found."
+
         embed.add_field(
             name="Character Guessed",
-            value=f"\n**Name:** {self.guess.name}\n{self.guess.description}",
+            value=f"\n**Name:** {name}\n{desc}",
         )
 
-        embed.set_image(url=self.guess.absolute_picture_path)
-        embed.set_footer(text="Was I correct?")
+        if self.aki.photo:
+            embed.set_image(url=self.aki.photo)
 
+        embed.set_footer(text="Was I correct?")
         return embed
 
     async def start(
@@ -164,7 +165,7 @@ class Akinator:
         if self.delete_button:
             await self.message.add_reaction(STOP)
 
-        while self.aki.progression <= self.win_at:
+        while not self.aki.win:
 
             def check(reaction: discord.Reaction, user: discord.User) -> bool:
                 emoji = str(reaction.emoji)
