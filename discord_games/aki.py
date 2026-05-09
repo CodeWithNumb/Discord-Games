@@ -150,10 +150,11 @@ class Akinator:
         if self.delete_button:
             self.instructions += f"{STOP} 🠒 `cancel`\n"
 
-        self.aki.theme = Theme.from_str(aki_theme)
-        self.aki.language = Language.from_str(aki_language)
-        self.aki.child_mode = child_mode
-        await self.aki.start_game()
+        await self.aki.start_game(
+            language="en",
+            child_mode=child_mode,
+            theme="c"
+        )
 
         embed = self.build_embed()
         self.message = await ctx.send(embed=embed)
@@ -204,7 +205,16 @@ class Akinator:
                         "I cannot go back any further", delete_after=10
                     )
             else:
-                answer = Answer.from_str(Options(emoji).name)
+                mapping = {
+                    "yes": "yes",
+                    "no": "no",
+                    "idk": "i don't know",
+                    "p": "probably",
+                    "pn": "probably not"
+                }
+                
+                answer = mapping[Options(emoji).name]
+                
                 await self.aki.answer(answer)
 
             embed = self.build_embed()
