@@ -79,7 +79,7 @@ class Akinator:
         return embed
 
     async def win(self) -> discord.Embed:
-        await self.aki.win()
+        #await self.aki.win()
         self.guess = self.aki.first_guess
 
         embed = discord.Embed(color=self.embed_color)
