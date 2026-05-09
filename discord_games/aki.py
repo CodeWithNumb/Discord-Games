@@ -10,9 +10,6 @@ from discord.ext import commands
 from akinator import (
     AsyncAkinator as AkinatorGame,
     CantGoBackAnyFurther,
-    Language,
-    Answer,
-    Theme,
 )
 
 from .utils import DiscordColor, DEFAULT_COLOR
