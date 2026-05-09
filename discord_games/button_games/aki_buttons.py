@@ -148,11 +148,7 @@ class BetaAkinator(Akinator):
             "English": "en"
         }
         
-        await self.aki.start_game(
-            language=lang_map.get(aki_language, "en"),
-            child_mode=child_mode,
-            theme=theme_map.get(aki_theme, "c")
-        )
+        await self.aki.start_game()
 
         embed = self.build_embed(instructions=False)
         self.message = await ctx.send(embed=embed, view=self.view)
