@@ -4,7 +4,7 @@ from typing import Optional, ClassVar
 
 import discord
 from discord.ext import commands
-from akinator import Theme, Language, Answer, CantGoBackAnyFurther
+from akinator import CantGoBackAnyFurther
 
 from ..aki import Akinator
 from ..utils import DiscordColor, DEFAULT_COLOR, BaseView
@@ -65,7 +65,15 @@ class AkiView(BaseView):
                     "I cant go back any further!", ephemeral=True
                 )
         else:
-            await game.aki.answer(Answer.from_str(answer))
+            mapping = {
+                "yes": "yes",
+                "no": "no",
+                "idk": "i don't know",
+                "probably": "probably",
+                "probably not": "probably not"
+            }
+            
+            await game.aki.answer(mapping[answer])
 
             if game.aki.progression >= game.win_at:
                 self.disable_all()
@@ -130,10 +138,21 @@ class BetaAkinator(Akinator):
         self.win_at = win_at
         self.view = AkiView(self, timeout=timeout)
 
-        self.aki.theme = Theme.from_str(aki_theme)
-        self.aki.language = Language.from_str(aki_language)
-        self.aki.child_mode = child_mode
-        await self.aki.start_game()
+        theme_map = {
+            "Characters": "c",
+            "Animals": "a",
+            "Objects": "o"
+        }
+        
+        lang_map = {
+            "English": "en"
+        }
+        
+        await self.aki.start_game(
+            language=lang_map.get(aki_language, "en"),
+            child_mode=child_mode,
+            theme=theme_map.get(aki_theme, "c")
+        )
 
         embed = self.build_embed(instructions=False)
         self.message = await ctx.send(embed=embed, view=self.view)
