@@ -73,7 +73,14 @@ class AkiView(BaseView):
                 "probably not": "probably not"
             }
             
-            await game.aki.answer(mapping[answer])
+            try:
+                await game.aki.answer(mapping[answer])
+            
+            except Exception as e:
+                return await interaction.response.send_message(
+                    f"```py\n{type(e).__name__}: {e}\n```",
+                    ephemeral=True
+                )
 
             if game.aki.progression >= game.win_at:
                 self.disable_all()
