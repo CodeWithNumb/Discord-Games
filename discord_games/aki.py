@@ -80,7 +80,7 @@ class Akinator:
 
     async def win(self) -> discord.Embed:
         #await self.aki.win()
-        self.guess = self.aki.first_guess
+        self.guess = self.aki.guesses[0]
 
         embed = discord.Embed(color=self.embed_color)
         embed.title = "Character Guesser Engine Results"
