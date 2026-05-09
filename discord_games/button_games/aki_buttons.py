@@ -44,7 +44,6 @@ class AkiView(BaseView):
     async def process_input(
         self, interaction: discord.Interaction, answer: str
     ) -> None:
-        await interaction.response.defer()
         game = self.game
 
         if interaction.user != game.player:
@@ -74,24 +73,16 @@ class AkiView(BaseView):
                 "probably not": "probably not"
             }
             
-            try:
-                await game.aki.answer(mapping[answer])
-            
-            except Exception as e:
-                return await interaction.response.send_message(
-                    f"```py\n{type(e).__name__}: {e}\n```",
-                    ephemeral=True
-                )
+            await game.aki.answer(mapping[answer])
 
-            if game.aki.progression >= game.win_at:
+            if game.aki.win:
                 self.disable_all()
                 embed = await game.win()
                 self.stop()
             else:
                 embed = game.build_embed(instructions=False)
         try:
-            #return await interaction.response.edit_message(embed=embed, view=self)
-            return await interaction.message.edit(embed=embed, view=self)
+            return await interaction.response.edit_message(embed=embed, view=self)
         except discord.NotFound:
             pass
 
